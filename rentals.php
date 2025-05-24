@@ -7,6 +7,8 @@ if (!isset($_SESSION['user_id'])) {
 require 'db.php';
 
 $msg = '';
+$msg_class = ''; 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $vehicle_id = $_POST['vehicle_id'];
@@ -14,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rent_date = $_POST['rent_date'];
     $return_date = $_POST['return_date'];
 
- 
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM rentals WHERE vehicle_id = ? AND ((rent_date <= ? AND (return_date IS NULL OR return_date >= ?)) OR (rent_date <= ? AND (return_date IS NULL OR return_date >= ?)) OR (? <= rent_date AND ? >= IFNULL(return_date, ?)))");
     $stmt->execute([ 
         $vehicle_id, 
@@ -26,13 +27,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($overlap > 0) {
         $msg = "⚠️ This vehicle is already rented for the selected dates.";
+        $msg_class = 'error';
     } else {
         
         $stmt = $pdo->prepare("INSERT INTO rentals (user_id, vehicle_id, rent_date, return_date) VALUES (?, ?, ?, ?)");
         if ($stmt->execute([$user_id, $vehicle_id, $rent_date, $return_date])) {
             $msg = "✅ Vehicle rented successfully.";
+            $msg_class = 'success'; 
         } else {
             $msg = "❌ Rental failed.";
+            $msg_class = 'error';
         }
     }
 }
@@ -44,12 +48,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Rent a Vehicle</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+       
+        .success {
+            color: green;
+        }
+
+       
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 <h2>Rent a Vehicle</h2>
 
 <?php if ($msg): ?>
-    <p style="color:green;"> <?= $msg ?> </p>
+    <p class="<?= $msg_class ?>"> <?= $msg ?> </p>
 <?php endif; ?>
 
 
@@ -74,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <br>
 
-
 <form method="POST">
     <label>Select Vehicle:</label>
     <select name="vehicle_id" id="vehicle_select" required>
@@ -93,7 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <p><a href="dashboard.php">Go Back</a></p>
 
 <script>
-
 document.getElementById("applyFilters").addEventListener("click", function() {
     const fuel = document.getElementById("fuel").value;
     const transmission = document.getElementById("transmission").value;
@@ -102,18 +115,16 @@ document.getElementById("applyFilters").addEventListener("click", function() {
     formData.append("fuel", fuel);
     formData.append("transmission", transmission);
 
- 
     fetch("vehicle_filter.php", {
         method: "POST",
         body: formData
     })
     .then(res => res.text())
     .then(data => {
-        document.getElementById("vehicle_select").innerHTML = data; 
+        document.getElementById("vehicle_select").innerHTML = data;
     })
     .catch(error => console.error('Error:', error));
 });
-
 
 window.addEventListener("load", function() {
     document.getElementById("applyFilters").click();
