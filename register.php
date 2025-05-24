@@ -6,6 +6,8 @@ if (isset($_SESSION['user_id'])) {
 }
 require 'db.php';
 $msg = '';
+$msg_class = '';  
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -17,15 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($user) {
         $msg = "This email address is already registered.";
+        $msg_class = 'error'; 
     } else {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-       
         $stmt = $pdo->prepare("INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)");
         if ($stmt->execute([$name, $email, $hashed_password])) {
             $msg = "Successfully registered. You can now log in.";
+            $msg_class = 'success';  
         } else {
             $msg = "Registration failed. Please try again.";
+            $msg_class = 'error';  
         }
     }
 }
@@ -36,21 +40,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title>Register</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
     <script>
-       
         window.onload = function() {
             const form = document.querySelector('form');
             
             form.addEventListener('submit', function(e) {
-                
                 let errorMessages = [];
                 
-              
                 const name = document.querySelector('input[name="name"]');
                 const email = document.querySelector('input[name="email"]');
                 const password = document.querySelector('input[name="password"]');
 
-      
                 if (!name.value.trim()) {
                     errorMessages.push("Please fill out the Full Name.");
                 }
@@ -63,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     errorMessages.push("Please fill out the Password.");
                 }
 
-                
                 if (errorMessages.length > 0) {
                     e.preventDefault(); 
                     alert(errorMessages.join("\n"));
@@ -80,9 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <input type="password" name="password" placeholder="Password"><br>
         <button type="submit">Register</button>
     </form>
-    <p style="color:red;">
-        <?= $msg ?>  
-    </p>
+    <p class="<?= $msg_class ?>"> <?= $msg ?> </p> 
     <p style="text-align: center;">Already have an account? <a href="index.php">Log in!</a></p>
 </body>
 </html>
