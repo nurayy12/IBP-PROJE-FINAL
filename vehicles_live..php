@@ -39,5 +39,3 @@
     <p><a href="dashboard.php">Geri Dön</a></p>
 </body>
 </html>
-
-<!-- Açıklama: Bu sayfa, AJAX ile mevcut araçları canlı olarak listeler. Sayfa yenilenmeden veri yüklenir. -->
